@@ -49,7 +49,7 @@ func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
 
 	// リクエストを構造体へアンマーシャル
 	var req ProduceRequest
-	err := json.NewDecoder(r.Body).Decode(*&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
