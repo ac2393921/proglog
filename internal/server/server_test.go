@@ -67,7 +67,7 @@ func setupTest(t *testing.T, fn func(*Config)) (
 
 	// リクエストの処理を開始
 	go func() {
-		server.Serve(l)
+		_ = server.Serve(l)
 	}()
 
 	client = api.NewLogClient(cc)
@@ -76,7 +76,7 @@ func setupTest(t *testing.T, fn func(*Config)) (
 		cc.Close()
 		server.Stop()
 		l.Close()
-		clog.Remove()
+		_ = clog.Remove()
 	}
 }
 
