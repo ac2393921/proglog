@@ -81,7 +81,7 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	require.NoError(t, err)
 
 	go func() {
-		server.Serve(l)
+		_ = server.Serve(l)
 	}()
 
 	return client, cfg, func() {
