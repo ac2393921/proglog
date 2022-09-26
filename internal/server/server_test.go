@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	api "github.com/ac2393921/proglog/api/v1"
+	"github.com/ac2393921/proglog/internal/config"
 	"github.com/ac2393921/proglog/internal/log"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
@@ -40,15 +41,29 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	t.Helper()
 
 	// ローカルネットワークのアドレスに対してリスナーを作成
-	l, err := net.Listen("tcp", ":0")
+	l, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	// 暗号化されていないコネクションを使うオプションを作成
-	clientOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials())}
-	// サーバを呼び出すクライアントを作成
-	cc, err := grpc.Dial(l.Addr().String(), clientOptions...)
+	clientTLSConfig, err := config.SetupTLSConfig(config.TLSConfig{
+		CAFile: config.CAFile,
+	})
 	require.NoError(t, err)
+
+	clientCreds := credentials.NewTLS(clientTLSConfig)
+	// サーバを呼び出すクライアントを作成
+	cc, err := grpc.Dial(l.Addr().String(), grpc.WithTransportCredentials(clientCreds))
+	require.NoError(t, err)
+
+	client = api.NewLogClient(cc)
+
+	serverTLSConfig, err := config.SetupTLSConfig(config.TLSConfig{
+		CertFile:      config.ServerCertFile,
+		KeyFile:       config.ServerKeyFile,
+		CAFile:        config.CAFile,
+		ServerAddress: l.Addr().String(),
+	})
+	require.NoError(t, err)
+	serverCreds := credentials.NewTLS(serverTLSConfig)
 
 	dir, err := os.MkdirTemp("", "server-test")
 	require.NoError(t, err)
@@ -62,15 +77,12 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	if fn != nil {
 		fn(cfg)
 	}
-	server, err := NewGRPCServer(cfg)
+	server, err := NewGRPCServer(cfg, grpc.Creds(serverCreds))
 	require.NoError(t, err)
 
-	// リクエストの処理を開始
 	go func() {
-		_ = server.Serve(l)
+		server.Serve(l)
 	}()
-
-	client = api.NewLogClient(cc)
 
 	return client, cfg, func() {
 		cc.Close()
