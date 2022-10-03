@@ -1,0 +1,6 @@
+{
+  "nuxt.isNuxtApp": false,
+  "gopls": {
+    "build.allowModfileModifications": true
+  }
+}
