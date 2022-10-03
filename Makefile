@@ -50,12 +50,12 @@ compile:
             --go-grpc_opt=paths=source_relative \
             --proto_path=.
 
-cpmodel:
-	cp test/model.conf $(CONFIG_PATH)model.conf
+$(CONFIG_PATH)/model.conf:
+	cp test/model.conf $(CONFIG_PATH)/model.conf
 
-cppolicy:
-	cp test/policy.csv $(CONFIG_PATH)policy.csv
+$(CONFIG_PATH)/policy.csv:
+	cp test/policy.csv $(CONFIG_PATH)/policy.csv
 
 .PHONY: test
-test:
+test: $(CONFIG_PATH)/model.conf $(CONFIG_PATH)/policy.csv
 	go test -v ./...
