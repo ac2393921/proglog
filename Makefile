@@ -57,5 +57,5 @@ $(CONFIG_PATH)/policy.csv:
 	cp test/policy.csv $(CONFIG_PATH)/policy.csv
 
 .PHONY: test
-test:
+test: $(CONFIG_PATH)/model.conf $(CONFIG_PATH)/policy.csv
 	go test -v ./...
